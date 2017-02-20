@@ -20,8 +20,11 @@ app.post('/todos', (req, res) => {
 
     // Save the documents
     newTodo.save()
-	.then(doc => res.send(`Saved the todo doc: ${doc}`))
-	.catch(err => res.send(`Error while saving the todo doc: ${err}`));
+	.then(doc => {
+	    console.log(`Saved the todo doc: ${doc}`);
+	    res.send(doc);
+	})
+	.catch(err => res.status(400).send(err));
 });
 
 // Define the port on which to listen to
@@ -29,14 +32,4 @@ app.listen(3000, () => {
     console.log('Listening on port 3000');
 });
 
-/*
-let newUser = new User({
-  name: 'John Doe',
-  email: 'johndoe@example.com'
-});
-
-newUser.save()
-       .then(doc => console.log(`Saved the user doc: ${doc}`))
-       .catch(err => console.log(`Error while saving the user doc: ${err}`));
-*/
-
+module.exports = {app};

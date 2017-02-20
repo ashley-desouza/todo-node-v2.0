@@ -12,6 +12,7 @@ let app = express();
 app.use(bodyParser.json());
 
 // Add Routes and Route Handlers
+// Route to create a new todo item
 app.post('/todos', (req, res) => {
     // Create model instances (i.e. documents)
     let newTodo = new Todo({
@@ -24,6 +25,13 @@ app.post('/todos', (req, res) => {
 	    console.log(`Saved the todo doc: ${doc}`);
 	    res.send(doc);
 	})
+	.catch(err => res.status(400).send(err));
+});
+
+// Route to get all todo items
+app.get('/todos', (req, res) => {
+    Todo.find()
+        .then(todos => res.send({todos}))
 	.catch(err => res.status(400).send(err));
 });
 

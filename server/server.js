@@ -1,5 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const {ObjectID} = require('mongodb');
 
 const { mongoose } = require('./db/mongoose');
 const { Todo } = require('./models/todo');
@@ -25,14 +26,32 @@ app.post('/todos', (req, res) => {
 	    console.log(`Saved the todo doc: ${doc}`);
 	    res.send(doc);
 	})
-	.catch(err => res.status(400).send(err));
+	.catch(err => res.sendStatus(400).send(err));
 });
 
 // Route to get all todo items
 app.get('/todos', (req, res) => {
     Todo.find()
         .then(todos => res.send({todos}))
-	.catch(err => res.status(400).send(err));
+	.catch(err => res.sendStatus(400).send(err));
+});
+
+// Route to get a todo item by ID
+app.get('/todos/:id', (req, res) => {
+    let id = req.params.id;
+
+    if (!ObjectID.isValid(id)) {
+        return res.sendStatus(404).send();
+    }
+
+    Todo.findById(id)
+        .then(todo => {
+	    if (!todo) {
+	        return res.sendStatus(404).send();
+	    }
+	    res.send({todo});
+	})
+	.catch(err => res.sendStatus(400).send());
 });
 
 // Define the port on which to listen to

@@ -8,6 +8,7 @@ const { User } = require('./models/user');
 
 // Create the express app
 let app = express();
+const port = process.env.PORT || 3000;
 
 // Add Middleware
 app.use(bodyParser.json());
@@ -55,8 +56,8 @@ app.get('/todos/:id', (req, res) => {
 });
 
 // Define the port on which to listen to
-app.listen(3000, () => {
-    console.log('Listening on port 3000');
+app.listen(port, () => {
+    console.log(`Listening on port ${port}`);
 });
 
 module.exports = {app};

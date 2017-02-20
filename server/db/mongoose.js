@@ -6,7 +6,7 @@ mongoose.Promise = global.Promise;
 
 // http://mongoosejs.com/docs/index.html
 // Connect to the database
-const url = 'mongodb://localhost:27017/TodoApp';
+const url = process.env.MONGODB_URI || 'mongodb://localhost:27017/TodoApp';
 
 mongoose.connect(url);
 

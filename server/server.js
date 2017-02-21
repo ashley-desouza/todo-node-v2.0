@@ -55,6 +55,25 @@ app.get('/todos/:id', (req, res) => {
 	.catch(err => res.sendStatus(400).send());
 });
 
+// Route to delete a todo item by ID
+app.delete('/todos/:id', (req, res) => {
+    let id = req.params.id;
+
+    if (!ObjectID.isValid(id)) {
+        return res.sendStatus(404).send();
+    }
+
+    Todo.findByIdAndRemove(id)
+        .then(todo => {
+	    if (!todo) {
+	        return res.sendStatus(404).send();
+	    }
+
+	    res.send({todo});
+	})
+	.catch(err => res.sendStatus(400).send());
+});
+
 // Define the port on which to listen to
 app.listen(port, () => {
     console.log(`Listening on port ${port}`);

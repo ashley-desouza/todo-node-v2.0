@@ -1,5 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const _ = require('lodash');
 const {ObjectID} = require('mongodb');
 
 const { mongoose } = require('./db/mongoose');
@@ -72,6 +73,35 @@ app.delete('/todos/:id', (req, res) => {
 	    res.send({todo});
 	})
 	.catch(err => res.sendStatus(400).send());
+});
+
+// Route to update a todo item by ID
+app.patch('/todos/:id', (req, res) => {
+    let id = req.params.id;
+    let body = _.pick(req.body, ['text', 'completed']); // ONLY pick the 'text' and 'completed' parameters from the request body
+
+    if (!ObjectID.isValid(id)) {
+        return res.sendStatus(404).send();
+    }
+
+    // Update the 'completedAt' property based on the 'completed' property
+    if (_.isBoolean(body.completed) && body.completed) {
+        body.completedAt = new Date().getTime();
+    } else {
+        body.completedAt = null;
+	body.completed = false;
+    }
+
+    // Search for the todo item by ID
+    // http://mongoosejs.com/docs/documents.html
+    Todo.findByIdAndUpdate(id, {$set: body}, {new: true})
+        .then(todo => {
+	    if(!todo) {
+	    	return res.sendStatus(404).send();
+	    }
+	    res.send({todo});
+	})
+	.catch(err => res.sendStatus(404).send());
 });
 
 // Define the port on which to listen to

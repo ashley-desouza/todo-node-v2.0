@@ -35,7 +35,6 @@ app.post('/todos', (req, res) => {
     // Save the documents
     newTodo.save()
 	.then(doc => {
-	    console.log(`Saved the todo doc: ${doc}`);
 	    res.send(doc);
 	})
 	.catch(err => res.sendStatus(400).send(err));
@@ -112,6 +111,25 @@ app.patch('/todos/:id', (req, res) => {
 	    res.send({todo});
 	})
 	.catch(err => res.sendStatus(404).send());
+});
+
+// Route to create a new user item
+app.post('/users', (req, res) => {
+    let body = _.pick(req.body, ['email', 'password']); // ONLY pick the 'email' and 'password' parameters from the request body
+
+    // Create model instances (i.e. documents)
+    let newUser = new User(body); // This is an interesting way of passing a JavaScript object.
+
+    // Save the documents
+    newUser.save()
+	.then(() => {
+	    // Generate the token to be sent back to the user
+	    return newUser.getAuthToken();
+	})
+	.then(token => {
+	    res.header('x-auth', token).send(newUser);
+	})
+	.catch(err => res.status(400).send(err));
 });
 
 // Define the port on which to listen to

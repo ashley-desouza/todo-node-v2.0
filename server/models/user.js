@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const validator = require('validator');
 const jwt = require('jsonwebtoken');
 const _ = require('lodash');
+const bcrypt = require('bcryptjs');
 
 // http://mongoosejs.com/docs/guide.html
 // Define the mongoose schemas
@@ -85,6 +86,25 @@ userSchema.methods.toJSON = function () {
   let userObject = user.toObject(); // Refer - http://mongoosejs.com/docs/guide.html#toObject
   return _.pick(userObject, ['_id', 'email']);  
 };
+
+// IMP - Add mongoose middleware so that we hash the password ONLY WHEN THE PASSWORD PROPERTY HAS BEEN MODIFIED.
+// Refer http://mongoosejs.com/docs/middleware.html
+userSchema.pre('save', function (next) {
+  let user = this; // Re-assign the 'this' object to a more logical name.
+
+  // THIS IS VERY IMP - We only want to modify the password hash when we are saving a document and the 'password'
+  // is one of the properties that has been modified.
+  if (user.isModified('password')) {
+    bcrypt.genSalt(10, (err, salt) => { // Generate the salt
+      bcrypt.hash(user.password, salt, (err, hash) => { // Generate the password hash
+        user.password = hash;
+	next();
+      });
+    });
+  } else {
+    next();
+  }
+});
 
 // Define the model
 let User = mongoose.model('User', userSchema);

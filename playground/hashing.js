@@ -1,37 +1,62 @@
-const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
+/* 
+let password = '123abc';
 
-let token = jwt.sign({id: 4}, 'secretsauce');
+// Generate the salt - Refer https://www.npmjs.com/package/bcryptjs#usage---async
+let salt = bcrypt.genSalt(10, (err, salt) => {
+  // Generate the hash using the generated salt
+  bcrypt.hash(password, salt, (err, hash) => {
+    console.log(hash);
+  });
+}); // 100 - Number of rounds to use. Default is 10.
+*/
 
+let hashedPassword = '$2a$10$q5qMrJG.7VcBVALhaIuneuc0qhPEkJCXc7GyiNCI3S9mNLmBLGZ26';
 
-console.log(`Token is: ${token}`);
+// Verify the hashed Password
+bcrypt.compare('123abc', hashedPassword, (err, res) => {
+  console.log(res);
+});
+/*
+  ---- Using the jsonwebtoken library ----
+  const jwt = require('jsonwebtoken');
 
-let decodedToken = jwt.verify(token, 'secretsauce');
+  let token = jwt.sign({id: 4}, 'secretsauce');
 
-console.log('Decoded token is: ', decodedToken);
+  console.log(`Token is: ${token}`);
 
-// const {SHA512} = require('crypto-js');
+  let decodedToken = jwt.verify(token, 'secretsauce');
 
-// let message = 'This is a dummy message';
+  console.log('Decoded token is: ', decodedToken);
+*/
 
-// let token = SHA512(message);
+/*
+    ---- Using the crypto-js library ----
 
-// console.log(`Message:${message}`);
-// console.log(`Token: ${token}`);
+  const {SHA512} = require('crypto-js');
 
-// let data = {
-//  id: 4
-// };
+  let message = 'This is a dummy message';
 
-// let newToken = {
-//   data,
-//   hash: SHA512(JSON.stringify(data) + 'secretsauce').toString()
-// };
+  let token = SHA512(message);
 
-// data.id = 5;
-// let resultHash = SHA512(JSON.stringify(newToken.data) + 'secretsauce').toString();
+  console.log(`Message:${message}`);
+  console.log(`Token: ${token}`);
 
-// if (resultHash === newToken.hash) {
-//  console.log('The data has not changed');
-// } else {
-//  console.log('Data has been manipulated. Don\'t updated.');
-// }
+  let data = {
+   id: 4
+  };
+
+  let newToken = {
+    data,
+    hash: SHA512(JSON.stringify(data) + 'secretsauce').toString()
+  };
+
+  data.id = 5;
+  let resultHash = SHA512(JSON.stringify(newToken.data) + 'secretsauce').toString();
+
+  if (resultHash === newToken.hash) {
+   console.log('The data has not changed');
+  } else {
+   console.log('Data has been manipulated. Don\'t updated.');
+  }
+*/

@@ -1,13 +1,4 @@
-let env = process.env.NODE_ENV || 'development';
-
-if (env === 'development') {
-    process.env.PORT = 3000;
-    process.env.MONGODB_URI = 'mongodb://localhost:27017/TodoApp';
-} else if (env === 'test') {
-    process.env.PORT = 3000;
-    process.env.MONGODB_URI = 'mongodb://localhost:27017/TodoAppTest';
-}
-
+require('./config/config');
 const express = require('express');
 const bodyParser = require('body-parser');
 const _ = require('lodash');
@@ -16,6 +7,7 @@ const {ObjectID} = require('mongodb');
 const { mongoose } = require('./db/mongoose');
 const { Todo } = require('./models/todo');
 const { User } = require('./models/user');
+const { authenticate } = require('./middleware/authenticate');
 
 // Create the express app
 let app = express();
@@ -131,6 +123,12 @@ app.post('/users', (req, res) => {
 	})
 	.catch(err => res.status(400).send(err));
 });
+
+// Route for user authentication
+app.get('/users/me', authenticate, (req, res) => {
+    res.send(req.user);
+});
+
 
 // Define the port on which to listen to
 app.listen(port, () => {

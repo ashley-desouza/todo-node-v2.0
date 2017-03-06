@@ -35,7 +35,35 @@ let userSchema = mongoose.Schema({
   }]
 });
 
-// Add Instance Methods to the Model. Refer - http://mongoosejs.com/docs/guide.html - Section marked 'Instance methods'
+// Add Model Methods to the Schema. Refer - http://mongoosejs.com/docs/guide.html#statics
+userSchema.statics.findByToken = function (token) {
+  let User = this; // Re-assign the 'this' object to a more logical name. NOTE that here we are using upper case 'U' as in 'User'
+  let decoded; // Leave this variable as undefined as we want to place the results of the jwt.verify operation in a try-catch block.
+
+  try {
+    decoded = jwt.verify(token, 'secretsauce');
+  } catch (e) {
+    // Return a Promise in reject state
+    /*
+      return new Promise((resolve, reject) => {
+        reject();
+      });
+    */
+
+    // How about doing it this way
+    return Promise.reject();
+  }
+
+  // Query the collection for the document using findOne
+  // Return Promise
+  return User.findOne({
+    '_id': decoded._id,
+    'tokens.token': token,
+    'tokens.access': 'auth'
+  });
+};
+
+// Add Instance Methods to the Schema. Refer - http://mongoosejs.com/docs/guide.html - Section marked 'Instance methods'
 userSchema.methods.getAuthToken = function () {
   let user = this; // Re-assign the 'this' object to a more logical name
   let access = 'auth'; // Set the 'assign' key to the value of 'auth'

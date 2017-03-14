@@ -29,7 +29,7 @@ app.post('/todos', (req, res) => {
 	.then(doc => {
 	    res.send(doc);
 	})
-	.catch(err => res.sendStatus(400).send(err));
+	.catch(err => res.status(400).send(err));
 });
 
 // Route to get all todo items
@@ -127,6 +127,20 @@ app.post('/users', (req, res) => {
 // Route for user authentication
 app.get('/users/me', authenticate, (req, res) => {
     res.send(req.user);
+});
+
+// Route to login a user
+app.post('/users/login', (req, res) => {
+    // Extract the email and password from the request object
+    let body = _.pick(req.body, ['email', 'password']);
+
+    User.findByCredentials(body.email, body.password)
+        .then(user => {
+	    // Generate the token to be sent back to the user
+	    return Promise.all([user, user.getAuthToken()]);
+	})
+	.then(results => res.header('x-auth', results[1]).send(results[0]))
+	.catch(err => res.status(400).send());
 });
 
 

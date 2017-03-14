@@ -4,24 +4,11 @@ const {ObjectID} = require('mongodb');
 
 const {app} = require('./../server');
 const {Todo} = require('./../models/todo');
+const {User} = require('./../models/user');
+const {todos, populateTodos, users, populateUsers} = require('./seed/seed');
 
-// Setup some dummy data in order to pass the GET /todos test
-let todos = [{
-    _id: new ObjectID(),
-    text: 'First todo item'
-}, {
-    _id: new ObjectID(),
-    text: 'Second todo item'
-}];
-
-beforeEach(done => {
-    Todo.remove()
-        .then(() => {
-	    return Todo.insertMany(todos);
-	})
-	.then(() => done())
-	.catch(err => done(err));
-});
+beforeEach(populateUsers);
+beforeEach(populateTodos);
 
 describe('POST /todos', () => {
     it('should create a new todo', done => {
@@ -32,7 +19,6 @@ describe('POST /todos', () => {
 	  .send({text})
 	  .expect(200)
 	  .expect((res) => {
-	      console.log(res.body)
 	      expect(res.body.text).toBe(text);
 	  })
 	  .end((err, res) => {
@@ -185,5 +171,166 @@ describe('PATCH /todos/:id', () => {
 	      expect(res.body.todo.completedAt).toNotExist();
 	  })
 	  .end(done);
+    });
+});
+
+describe('GET /users/me', () => {
+    it('should authenticate the user', done => {
+        request(app)
+	  .get('/users/me')
+	  .set('x-auth', users[0].tokens[0].token) // The 'set' method is used to set a header in the requust object
+	  .expect(200)
+	  .expect(res => {
+	      // Since, this API returns an object containing the _id and email, let us check if those 
+	      expect(res.body._id).toBe(users[0]._id.toHexString());
+	      expect(res.body.email).toBe(users[0].email);
+	  })
+	  .end(done);
+    });
+
+    it('should return an unauthenticated user message', done => {
+        request(app)
+	  .get('/users/me')
+	  .expect(401)
+	  .expect(res => {
+	      // Assert an Empty Object has been returned. In the 'expect' library, comparing Objects is done using the toEqual() method
+	      expect(res.body).toEqual({});
+	  })
+	  .end(done);
+    });
+});
+
+describe('POST /users', _ => {
+    it('should create a new user', done => {
+	// Provide user credentials for this test
+	let email = 'user@exampleuser.com';
+	let password = 'newUserPass!';
+
+        request(app)
+	  .post('/users')
+	  .send({
+	    email: email,
+	    password: password
+	  })
+	  .expect(200)
+	  .expect(res => {
+	      // Assert - 
+	      //    1. The response body has a header called 'x-auth'
+	      //    2. The response body has a '_id' property
+	      //    3. The response body has an 'email' property that matches the email variable.
+	      expect(res.headers['x-auth']).toExist();
+	      expect(res.body._id).toExist();
+	      expect(res.body.email).toBe(email);
+	  })
+	  .end(err => {
+	      if (err) {
+	          return done(err);
+	      }
+
+	      // Check if the document is available in the database
+	      User.findOne({email})
+	          .then(user => {
+		    // Assert -
+		    //    1. The 'user' document has been retrieved and returned.
+		    //    2. The 'password' property of the 'user' document should NOT equal to the 'password' variable. 
+		    //       This is because the 'password' property is a hashed value and the 'password' variable is a string.
+		    expect(user).toExist();
+		    expect(user.password).toNotBe(password);
+
+		    done();
+		  })
+		  .catch(err => done(err));
+	  });
+    });
+
+    it('should return validation errors if request invalid', done => {
+        let email = 'abc';
+	let password = 'pass';
+
+	request(app)
+	  .post('/users')
+	  .send({email, password})
+	  .expect(400)
+	  .end(done);
+    });
+
+    it('should not create a new user if email in use', done => {
+	// Use an existing email from the seed data
+        let email = users[0].email;
+	let password = 'newUserPass@';
+
+        request(app)
+	  .post('/users')
+	  .send({email, password})
+	  .expect(400)
+	  .end(done);
+    });
+});
+
+describe('POST /users/login', _ => {
+    it('should login the user', done => {
+        // Use a valid user from the seed data
+	let email = users[1].email;
+	let password = users[1].password;
+
+	request(app)
+	  .post('/users/login')
+	  .send({email, password})
+	  .expect(200)
+	  .expect(res => {
+	      // Assert -
+	      //    1. The 'x-auth' header has been received
+	      //    2. The response body includes a object that includes 'access' and 'token' properties
+	      //    3. Query the database and confirm that the user document returned has a token which matches what is in the 'x-auth' header
+
+	      expect(res.headers['x-auth']).toExist();
+	  })
+	  .end((err, res) => {
+	      if (err) {
+	          return done(err);
+	      }
+
+	      // Assert - 
+	      //    1. Query the database and -
+	      //        a. Confirm that the returned document includes a object that includes 'access' and 'token' properties
+
+              User.findById(users[1]._id)
+	          .then(user => {
+		      expect(user.tokens[0]).toInclude({
+		          access: 'auth',
+			  token: res.headers['x-auth']
+		      });
+
+		      done();
+		  })
+		  .catch(err => done(err));
+	  });
+    });
+
+    it('should not login the user with invalid credentials', done => {
+        // Use invalid login credentials
+	let email = users[1].email;
+	let password = users[1].password + '1';
+
+	request(app)
+	  .post('/users/login')
+	  .send({email, password})
+	  .expect(400)
+	  .expect(res => {
+	      expect(res.headers['x-auth']).toNotExist();
+	  })
+	  .end((err, res) => {
+	      if (err) {
+	          done(err);
+	      }
+
+	      User.findById(users[1]._id)
+	          .then(user => {
+		      expect(user.tokens.length).toBe(0);
+		      done();
+		  })
+		  .catch(err => done(err));
+	  });
+    
     });
 });

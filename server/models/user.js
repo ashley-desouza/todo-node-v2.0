@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const _ = require('lodash');
 const bcrypt = require('bcryptjs');
 
+/*------------------------------ Schema ------------------------------ */
 // http://mongoosejs.com/docs/guide.html
 // Define the mongoose schemas
 let userSchema = mongoose.Schema({
@@ -36,6 +37,7 @@ let userSchema = mongoose.Schema({
   }]
 });
 
+/*------------------------------ Model Methods ------------------------------ */
 // Add Model Methods to the Schema. Refer - http://mongoosejs.com/docs/guide.html#statics
 userSchema.statics.findByToken = function (token) {
   let User = this; // Re-assign the 'this' object to a more logical name. NOTE that here we are using upper case 'U' as in 'User'
@@ -64,6 +66,32 @@ userSchema.statics.findByToken = function (token) {
   });
 };
 
+userSchema.statics.findByCredentials = function (email, password) {
+  let User = this;
+
+  return User.findOne({email})
+             .then(user => {
+	         // Check if the 'user' document is retrieved and available 
+	         if(!user) {
+		   return Promise.reject();
+		 }
+
+                 // Because the 'bcrypt.compare()' method works only with callbacks and we want to maintain our consistent use of Promises
+		 // we must wrap the bcrypt.compare() method in a Promise
+		 return new Promise((resolve, reject) => {
+		     bcrypt.compare(password, user.password, (err, res) => {
+		         if(res) {
+			     resolve(user);
+			 }
+
+			 reject();
+		     });
+		 });
+
+	     });
+};
+
+/*------------------------------ Instance Methods ------------------------------ */
 // Add Instance Methods to the Schema. Refer - http://mongoosejs.com/docs/guide.html - Section marked 'Instance methods'
 userSchema.methods.getAuthToken = function () {
   let user = this; // Re-assign the 'this' object to a more logical name
@@ -87,6 +115,7 @@ userSchema.methods.toJSON = function () {
   return _.pick(userObject, ['_id', 'email']);  
 };
 
+/*------------------------------ Mongoose Middleware ------------------------------ */
 // IMP - Add mongoose middleware so that we hash the password ONLY WHEN THE PASSWORD PROPERTY HAS BEEN MODIFIED.
 // Refer http://mongoosejs.com/docs/middleware.html
 userSchema.pre('save', function (next) {
@@ -106,6 +135,7 @@ userSchema.pre('save', function (next) {
   }
 });
 
+/*------------------------------ Model ------------------------------ */
 // Define the model
 let User = mongoose.model('User', userSchema);
 

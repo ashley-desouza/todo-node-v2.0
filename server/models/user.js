@@ -115,6 +115,22 @@ userSchema.methods.toJSON = function () {
   return _.pick(userObject, ['_id', 'email']);  
 };
 
+// Method to remove a token
+userSchema.methods.removeToken = function (token) {
+    let user = this; // Re-assign the 'this' object to a more logical name
+
+    // Update the specific user document
+    // http://mongoosejs.com/docs/api.html#model_Model.update
+    return user.update({
+               // https://docs.mongodb.com/manual/reference/operator/update/pull/
+               $pull: {
+	           tokens: {
+	               token: token
+	           }
+	       }
+           });
+}
+
 /*------------------------------ Mongoose Middleware ------------------------------ */
 // IMP - Add mongoose middleware so that we hash the password ONLY WHEN THE PASSWORD PROPERTY HAS BEEN MODIFIED.
 // Refer http://mongoosejs.com/docs/middleware.html

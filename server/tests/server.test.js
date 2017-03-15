@@ -334,3 +334,31 @@ describe('POST /users/login', _ => {
     
     });
 });
+
+describe('DELETE /users/me/token', () => {
+    it('should remove the token if the user has been authenticated', done => {
+	// Choose a user document from the seed data that has a token provided
+        let token = users[0].tokens[0].token;
+
+	request(app)
+	  .delete('/users/me/token')
+	  .set('x-auth', token)
+	  .send()
+	  .expect(200)
+	  .end((err, res) => {
+	      if (err) {
+	          done(err);
+	      }
+
+	      // Assert -
+	      //    1. Query the database and confirm that the user token has been deleted
+	      User.findById(users[0]._id)
+	          .then(user => {
+		      expect(user.tokens.length).toBe(0);
+		      done();
+		  })
+		  .catch(err => done(err));
+	  });
+    });
+
+});

@@ -18,10 +18,11 @@ app.use(bodyParser.json());
 
 // Add Routes and Route Handlers
 // Route to create a new todo item
-app.post('/todos', (req, res) => {
+app.post('/todos', authenticate, (req, res) => {
     // Create model instances (i.e. documents)
     let newTodo = new Todo({
-      text: req.body.text
+      text: req.body.text,
+      _creator: req.user._id
     });
 
     // Save the documents
@@ -33,21 +34,24 @@ app.post('/todos', (req, res) => {
 });
 
 // Route to get all todo items
-app.get('/todos', (req, res) => {
-    Todo.find()
+app.get('/todos', authenticate, (req, res) => {
+    Todo.find({_creator: req.user._id})
         .then(todos => res.send({todos}))
 	.catch(err => res.sendStatus(400).send(err));
 });
 
 // Route to get a todo item by ID
-app.get('/todos/:id', (req, res) => {
+app.get('/todos/:id', authenticate, (req, res) => {
     let id = req.params.id;
 
     if (!ObjectID.isValid(id)) {
         return res.sendStatus(404).send();
     }
 
-    Todo.findById(id)
+    Todo.findOne({
+        _id: id,
+	    _creator: req.user._id
+	})
         .then(todo => {
 	    if (!todo) {
 	        return res.sendStatus(404).send();
@@ -58,14 +62,17 @@ app.get('/todos/:id', (req, res) => {
 });
 
 // Route to delete a todo item by ID
-app.delete('/todos/:id', (req, res) => {
+app.delete('/todos/:id', authenticate, (req, res) => {
     let id = req.params.id;
 
     if (!ObjectID.isValid(id)) {
         return res.sendStatus(404).send();
     }
 
-    Todo.findByIdAndRemove(id)
+    Todo.findOneAndRemove({
+        _id: id,
+	    _creator: req.user._id
+	})
         .then(todo => {
 	    if (!todo) {
 	        return res.sendStatus(404).send();
@@ -77,7 +84,7 @@ app.delete('/todos/:id', (req, res) => {
 });
 
 // Route to update a todo item by ID
-app.patch('/todos/:id', (req, res) => {
+app.patch('/todos/:id', authenticate, (req, res) => {
     let id = req.params.id;
     let body = _.pick(req.body, ['text', 'completed']); // ONLY pick the 'text' and 'completed' parameters from the request body
 
@@ -95,7 +102,7 @@ app.patch('/todos/:id', (req, res) => {
 
     // Search for the todo item by ID
     // http://mongoosejs.com/docs/documents.html
-    Todo.findByIdAndUpdate(id, {$set: body}, {new: true})
+    Todo.findOneAndUpdate({_id: id, _creator: req.user._id}, {$set: body}, {new: true})
         .then(todo => {
 	    if(!todo) {
 	    	return res.sendStatus(404).send();

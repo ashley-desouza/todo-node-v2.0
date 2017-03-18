@@ -13,21 +13,28 @@ let users = [{
   password: 'userOnePass',
   tokens: [{
     access: 'auth',
-    token: jwt.sign({_id: userOneId, access: 'auth'}, 'secretsauce').toString()
-  }]}, {
-    _id: userTwoId,
-    email: 'user2@example.com',
-    password: 'userTwoPass'
-  }];
+    token: jwt.sign({ _id: userOneId, access: 'auth' }, process.env.JWT_SECRET).toString()
+  }]
+}, {
+  _id: userTwoId,
+  email: 'user2@example.com',
+  password: 'userTwoPass',
+  tokens: [{
+    access: 'auth',
+    token: jwt.sign({ _id: userTwoId, access: 'auth' }, process.env.JWT_SECRET).toString()
+  }]
+}];
 
 let todos = [{
   _id: new ObjectID(),
-  text: 'Eat Lunch'
+  text: 'Eat Lunch',
+  _creator: userOneId
 }, {
   _id: new ObjectID(),
   text: 'Complete NodeJS app',
   completed: true,
-  completedAt: 553
+  completedAt: 553,
+  _creator: userTwoId
 }];
 
 let populateTodos = done => {

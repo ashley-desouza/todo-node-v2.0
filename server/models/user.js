@@ -44,7 +44,7 @@ userSchema.statics.findByToken = function (token) {
   let decoded; // Leave this variable as undefined as we want to place the results of the jwt.verify operation in a try-catch block.
 
   try {
-    decoded = jwt.verify(token, 'secretsauce');
+    decoded = jwt.verify(token, process.env.JWT_SECRET);
   } catch (e) {
     // Return a Promise in reject state
     /*
@@ -96,7 +96,7 @@ userSchema.statics.findByCredentials = function (email, password) {
 userSchema.methods.getAuthToken = function () {
   let user = this; // Re-assign the 'this' object to a more logical name
   let access = 'auth'; // Set the 'assign' key to the value of 'auth'
-  let token = jwt.sign({_id: user._id.toHexString(), access}, 'secretsauce').toString();
+  let token = jwt.sign({_id: user._id.toHexString(), access}, process.env.JWT_SECRET).toString();
 
   user.tokens.push({access, token}); // Add the generated token to the 'tokens' array.
   

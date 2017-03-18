@@ -15,6 +15,12 @@ let todoSchema = mongoose.Schema({
   },
   completedAt: {
     type: Number
+  },
+  // NOTE: The user who created the todo document, it is defined prefixed with an underscore
+  _creator: {
+    // http://mongoosejs.com/docs/schematypes.html
+    type: mongoose.Schema.Types.ObjectId,
+    required: true
   }
 });
 

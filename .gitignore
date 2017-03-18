@@ -1,1 +1,4 @@
 node_modules/
+
+# Hide the local environment variables
+/**/*.json
